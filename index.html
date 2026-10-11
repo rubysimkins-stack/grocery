@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0053e2">
+<title>My Grocery List</title><link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box}body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:0;background:#f4f6fa;color:#222}
+header{background:#0053e2;color:#fff;padding:16px 16px 12px;position:sticky;top:0;z-index:2}
+h1{margin:0 0 10px;font-size:22px}
+form{display:flex;gap:8px}
+#item{flex:1;font-size:18px;padding:12px;border:0;border-radius:10px}
+#add{font-size:18px;padding:0 18px;border:0;border-radius:10px;background:#ffc220;font-weight:700}
+main{padding:10px 14px 90px;max-width:560px;margin:0 auto}
+.sec{font-size:13px;font-weight:700;color:#0053e2;margin:16px 4px 6px;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:6px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.row input{width:24px;height:24px;flex:none}
+.row span{flex:1;font-size:17px}.row.done span{text-decoration:line-through;color:#aaa}
+.row button{border:0;background:none;color:#c00;font-size:20px}
+.empty{text-align:center;color:#888;margin-top:40px}
+footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+footer button{flex:1;font-size:15px;padding:12px;border-radius:10px;border:1px solid #0053e2;background:#fff;color:#0053e2;font-weight:600}
+footer button.p{background:#0053e2;color:#fff}
+</style></head><body>
+<header><h1>🛒 My Grocery List</h1>
+<form id="f"><input id="item" placeholder="Remembered something? Type it…" autocomplete="off"><button id="add">Add</button></form></header>
+<main id="list"></main>
+<footer><button class="p" id="staples">+ Weekly staples</button><button id="house">+ Household</button><button id="clear">Clear checked</button></footer>
+<script>
+const SECTIONS=["Produce (AP2 / A1)","Frozen (A5 / A6)","Pantry & Canned","Drinks (A22)","Dairy & Eggs (A26)","Meat & Cheese (A27)","Bakery","Household (J aisles)","Kids & Baby","Pets","Other"];
+const KW={0:"banana potato salad lettuce spinach carrot zucchini onion apple grape berr strawberr blueberr avocado tomato cucumber cabbage pepper fruit veg lemon lime garlic celery broccoli",
+1:"frozen hash brown nugget pizza ice cream green bean corn fries waffle",
+2:"luncheon spam can soup broth rice pasta bean sauce peanut butter cereal tuna flour sugar oil spice ketchup mayo chips snack cracker goldfish cheez",
+3:"juice soda water coffee tea ginger ale",
+4:"milk egg yogurt sour cream butter cream almond oat creamer",
+5:"chicken beef pork bacon sausage turkey ham thigh ground cheddar cheese",
+6:"bread bun tortilla bagel",
+7:"detergent tide trash bag dawn dish soap paper towel toilet napkin cleaner bleach foil",
+8:"pampers easy ups diaper wipes kids vitamin toothpaste",
+9:"cat dog friskies pet litter"};
+function guess(t){t=t.toLowerCase();for(const i in KW)for(const w of KW[i].split(" "))if(t.includes(w))return +i;return 10}
+const STAPLES=["Organic bananas (~5 lb)","Russet potatoes, 5 lb","Salad kits x2","Organic carrots, 2 lb","Zucchini x2-3","Green onions","Tyson chicken nuggets","GV fine green beans (frozen)","GV hash browns x2","GV luncheon meat x2","Welch's grape juice x2","Whole milk x2 gallons","Silk almond milk x2","Sour cream","Eggs, 60 ct","Oikos Pro yogurt","Chicken thighs","GV shredded sharp cheddar 32 oz","GV bacon"];
+const HOUSE=["Trash bags","Dawn dish soap","Tide detergent","Friskies cat food","Toilet paper","Softsoap hand soap x2","Pampers Easy Ups"];
+let items=JSON.parse(localStorage.getItem("groc")||"[]");
+const save=()=>localStorage.setItem("groc",JSON.stringify(items));
+function add(t){t=t.trim();if(!t)return;if(items.some(x=>x.t.toLowerCase()==t.toLowerCase()&&!x.d))return;items.push({t,s:guess(t),d:false});save();render()}
+function render(){const L=document.getElementById("list");L.innerHTML="";
+if(!items.length){L.innerHTML='<p class="empty">Your list is empty.<br>Type an item above, or tap “+ Weekly staples”.</p>';return}
+SECTIONS.forEach((name,si)=>{const g=items.map((x,i)=>[x,i]).filter(([x])=>x.s==si);if(!g.length)return;
+const h=document.createElement("div");h.className="sec";h.textContent=name;L.appendChild(h);
+g.sort((a,b)=>a[0].d-b[0].d).forEach(([x,i])=>{const r=document.createElement("label");r.className="row"+(x.d?" done":"");
+r.innerHTML='<input type="checkbox" '+(x.d?"checked":"")+'><span></span><button title="Delete">✕</button>';
+r.querySelector("span").textContent=x.t;
+r.querySelector("input").onchange=e=>{x.d=e.target.checked;save();render()};
+r.querySelector("button").onclick=e=>{e.preventDefault();items.splice(i,1);save();render()};L.appendChild(r)})})}
+document.getElementById("f").onsubmit=e=>{e.preventDefault();const i=document.getElementById("item");add(i.value);i.value="";i.focus()};
+document.getElementById("staples").onclick=()=>STAPLES.forEach(add);
+document.getElementById("house").onclick=()=>HOUSE.forEach(add);
+document.getElementById("clear").onclick=()=>{if(confirm("Remove checked items?")){items=items.filter(x=>!x.d);save();render()}};
+render();
+</script></body></html>
